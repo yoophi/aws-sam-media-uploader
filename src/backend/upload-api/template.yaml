@@ -1,0 +1,69 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: |
+  Upload API
+Globals:
+  Function:
+    Timeout: 3
+    Environment:
+      Variables:
+        UPLOAD_BUCKET: !Ref S3UploadBucket
+        URL_EXPIRE_SECONDS: 300
+Resources:
+  UploadApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Cors:
+        AllowMethods: "'POST, GET, PUT, OPTIONS'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'http://localhost:3000'"
+        MaxAge: "'600'"
+        AllowCredentials: true
+  UploadApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: upload_api/
+      Handler: upload_api.entrypoints.lambda_handler
+      Runtime: python3.9
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 100
+      Policies:
+        S3WritePolicy:
+          BucketName: !Ref S3UploadBucket
+      Events:
+        UploadImg:
+          Type: Api
+          Properties:
+            RestApiId: !Ref UploadApi
+            Path: /presigned-urls
+            Method: POST
+  UploadApiFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DependsOn:
+      - UploadApiFunction
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${UploadApiFunction}
+      RetentionInDays: 3
+  S3UploadBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - '*'
+            AllowedMethods:
+              - GET
+              - PUT
+              - POST
+            AllowedOrigins:
+              - '*'
+Outputs:
+  GetUploadApi:
+    Description: API Gateway endpoint URL for Prod stage for function
+    Value: !Sub https://${UploadApi}.execute-api.${AWS::Region}.amazonaws.com/prod/upload
+  S3UploadBucketName:
+    Description: S3 bucket for img uploads
+    Value: !Ref S3UploadBucket
