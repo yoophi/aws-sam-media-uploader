@@ -1,5 +1,13 @@
 # s3-media-bucket
 
+미디어 서비스에 사용할 S3 Bucket.을 생성합니다.
+
+S3 Bucket 은 website access 로 사용할 수 있는 public read 권한으로 생성됩니다.
+
+생성한 Bucket 이름은 Parameter Store 에 저장합니다.
+
+----
+
 This project contains source code and supporting files for a serverless application that you can deploy with the SAM CLI. It includes the following files and folders.
 
 - hello_world - Code for the application's Lambda function.
